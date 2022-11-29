@@ -37,38 +37,121 @@ class HomeScreen : Fragment() {
         return binding.root
     }
 
-    val randomList = listOf(1, 48, 56, 75, 3, 81, 55, 4, 22, 2, 5, 7, 98, 11, 14, 52, 16)
-    val rgbs = mutableListOf<MutableList<Int>>()
-    val rgbList = mutableListOf<rgbList>()
+    val rgbs = mutableListOf<rgbList>()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
-
-
-        _binding!!.result.text = rgbList.toString()
+        imageView = _binding!!.imageViewRobot
+        prepareImage()
+        //_binding!!.result.text = rgbList.toString()
         _binding!!.startBtn.setOnClickListener {
             //startSorting()
-            startMagic()
+            //startMagicBubble()
+
+            CoroutineScope(Dispatchers.IO).launch {
+                rgbs.shuffle()
+                val result = quicksort(rgbs)
+
+            }
         }
-        prepareImage()
+
 
     }
 
-    private fun startMagic() {
-        val imageView: ImageView = _binding!!.imageViewRobot
-        val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val paint = Paint()
+    val factor = 51
 
+    lateinit var imageView: ImageView
+    val bitmap = Bitmap.createBitmap(factor, factor, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint()
+    fun quicksort(items: MutableList<rgbList>): List<rgbList> {
         var index = 0
-        CoroutineScope(Dispatchers.Default).launch {
-            for (x in 0 until 200) {
-                for (y in 0 until 200) {
+
+        if (items.count() < 2) {
+
+            return items
+        }
+        val pivot = items[items.count() / 2]
+
+        val equal = items.filter { it == pivot }
+
+        val less = items.filter { it.indexId < pivot.indexId }
+
+        val greater = items.filter { it.indexId > pivot.indexId }
+
+        for (x in 0 until factor) {
+            for (y in 0 until factor) {
+
                     paint.color = Color.rgb(
-                        rgbs[index][0],
-                        rgbs[index][1],
-                        rgbs[index][2],
+                        pivot.rgbs[0],
+                        pivot.rgbs[1],
+                        pivot.rgbs[2],
+                    )
+
+                canvas.drawPoint(x.toFloat(), y.toFloat(), paint)
+                CoroutineScope(Dispatchers.Main).launch {
+                    imageView.setImageBitmap(bitmap)
+
+
+                }
+
+                index++
+            }
+
+        }
+
+        return quicksort(less.toMutableList()) + equal + quicksort(greater.toMutableList())
+
+    }
+
+
+    private fun startMagicBubble() {
+
+        rgbs.shuffle()
+        var index: Int
+        CoroutineScope(Dispatchers.IO).launch {
+            Log.d("magic", "rgb size ${rgbs.size}")
+            do {
+                next = false
+                var level = rgbs.size - 1
+
+                for (i in 0 until level) {
+                    if (rgbs[i].indexId > rgbs[i + 1].indexId) {
+                        next = true
+                        index = 0
+                        Collections.swap(rgbs, i, i + 1)
+                        if (i % 10000 == 0) {
+                            for (x in 0 until factor) {
+                                for (y in 0 until factor) {
+                                    paint.color = Color.rgb(
+                                        rgbs[index].rgbs[0],
+                                        rgbs[index].rgbs[1],
+                                        rgbs[index].rgbs[2],
+                                    )
+
+                                    canvas.drawPoint(x.toFloat(), y.toFloat(), paint)
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        imageView.setImageBitmap(bitmap)
+
+                                    }
+
+                                    index++
+                                }
+
+                            }
+
+                        }
+                    }
+                }
+                level--
+
+            } while (next)
+            index = 0
+            for (x in 0 until factor) {
+                for (y in 0 until factor) {
+                    paint.color = Color.rgb(
+                        rgbs[index].rgbs[0],
+                        rgbs[index].rgbs[1],
+                        rgbs[index].rgbs[2],
                     )
 
                     canvas.drawPoint(x.toFloat(), y.toFloat(), paint)
@@ -76,10 +159,7 @@ class HomeScreen : Fragment() {
                         imageView.setImageBitmap(bitmap)
 
                     }
-                    if (index % 20 == 0) {
 
-                        delay(1)
-                    }
                     index++
                 }
 
@@ -87,31 +167,31 @@ class HomeScreen : Fragment() {
         }
     }
 
+
+    /*
+
+     */
     @SuppressLint("SetTextI18n")
     private fun prepareImage() {
-
-        val bm = BitmapFactory.decodeResource(resources, R.drawable.eminem).scale(200, 200)
+        var index = 0
+        val bm = BitmapFactory.decodeResource(resources, R.drawable.eminem).scale(factor, factor)
         CoroutineScope(Dispatchers.IO).launch {
-            for (x in 0 until 200) {
-                for (y in 0 until 200) {
+
+            for (x in 0 until factor) {
+                for (y in 0 until factor) {
                     val pixel = bm.getPixel(x, y)
-
-
                     rgbs.add(
-                        mutableListOf(pixel.red, pixel.green, pixel.blue)
+                        rgbList(index, listOf(pixel.red, pixel.green, pixel.blue))
                     )
-
-
+                    index++
                 }
+
             }
             CoroutineScope(Dispatchers.Main).launch {
 
                 binding.startBtn.isEnabled = true
             }
-            /*
-            CoroutineScope(Dispatchers.Main).launch {
-                binding.result.text = rgbs.toString()
-            }*/
+
         }
     }
 

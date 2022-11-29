@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/white"
         android:id="@+id/startBtn"
-        android:enabled="false"
+        android:enabled="true"
         android:text="başlat" />
 
 
